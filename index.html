@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendrier 2024</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-A1hRYbIhNB1fTIzg2f/G+bYfM2Lrq9Z25U7Cv55ikYopq3FpfqYWTfPjYzZ0OzI7VlIjE13LWYk15f5STPpGdw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f5f5f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .container {
+        display: flex;
+        width: calc(100% - 40px); /* Ajustez la largeur de la container pour remplir tout l'espace disponible avec un espacement de 20 pixels de chaque côté */
+        margin: 0 20%; /* Ajoute un espacement de 20 % à gauche et à droite */
+    }
+
+    .calendar {
+        flex: 0.7; /* Ajustez la largeur du calendrier ici */
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-right: 0px; /* Espacement entre le calendrier et les événements */
+    }
+
+    .events {
+        flex: 0.3; /* Ajustez la largeur de la liste des événements ici */
+        padding: 10px;
+    }
+
+    .header {
+        background-color: #4CAF50;
+        color: #fff;
+        text-align: center;
+        padding: 15px 0;
+        font-size: 1.2em;
+        position: relative;
+    }
+
+    .header button {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 5px 10px;
+        font-size: 1em;
+        color: #fff;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+    }
+
+    .header .prev {
+        left: 10px;
+    }
+
+    .header .next {
+        right: 10px;
+    }
+
+    .month {
+        background-color: #4CAF50;
+        color: #fff;
+        text-align: center;
+        padding: 10px 0;
+        font-size: 1.1em;
+    }
+
+    .days {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 10px;
+    }
+
+    .day {
+        width: calc(100% / 7);
+        text-align: center;
+        padding: 10px 0;
+        font-weight: bold;
+        color: #333;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .day:hover {
+        background-color: #f1f1f1;
+    }
+
+    .day:nth-child(7n+1) {
+        color: #f44336;
+    }
+
+    .day:nth-child(7n) {
+        color: #2196f3;
+    }
+
+    .event-list {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .event-item {
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        padding: 5px;
+        margin-bottom: 5px;
+        position: relative;
+    }
+
+    .event-description {
+        font-weight: bold;
+        margin-bottom: 2px;
+        font-size: 14px; /* Ajustez la taille de la description de l'événement ici */
+    }
+
+    .event-date {
+        color: #666;
+        font-size: 12px; /* Ajustez la taille de la date de l'événement ici */
+    }
+
+    .delete-cross {
+        position: absolute;
+        top: 2px;
+        right: 5px;
+        color: #999;
+        cursor: pointer;
+        font-size: 16px; /* Ajustez la taille de la croix ici */
+    }
+
+    .delete-cross:hover {
+        color: #f44336;
+    }
+
+    /* Afficher le formulaire d'ajout d'événement */
+    .event-form {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+
+    /* Afficher le formulaire lorsque la classe show-form est ajoutée */
+    .show-form {
+        display: block;
+    }
+
+    /* Style pour les éléments du formulaire */
+    .event-form input[type="text"],
+    .event-form input[type="date"],
+    .event-form button {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 8px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+    }
+
+    .event-form button {
+        background-color: #4CAF50;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+    }
+
+    .event-form button:hover {
+        background-color: #45a049;
+    }
+
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="calendar"></div>
+    <div class="events">
+        <h2>Events of this month</h2>
+        <ul class="event-list" id="eventList"></ul>
+    </div>
+</div>
+
+<!-- Formulaire d'ajout d'événement -->
+<div class="event-form" id="eventForm">
+    <h3 style="text-align: center;">Event</h3>
+
+    <input type="text" id="eventDescription" placeholder="Description of the event">
+    <input type="Date" iD="eventDate">
+    <button type="button" onclick="addEvent()">Add</button>
+</div>
+
+<script>
+    function createCalendar(year, month) {
+        const months = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "Décember"
+        ];
+        const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    
+        let calendarHTML = '<div class="calendar">';
+        calendarHTML += '<div class="header">';
+        calendarHTML += '<button class="prev" onclick="prevMonth()">&lt;</button>';
+        calendarHTML += months[month - 1] + ' ' + year;
+        calendarHTML += '<button class="next" onclick="nextMonth()">&gt;</button>';
+        calendarHTML += '</div>';
+        calendarHTML += '<div class="days">';
+    
+        for (let i = 0; i < daysOfWeek.length; i++) {
+            calendarHTML += '<div class="day">' + daysOfWeek[i] + '</div>';
+        }
+    
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
+    
+        let dayOfMonth = 1;
+    
+        for (let i = 0; i < 42; i++) {
+            if (i < firstDayOfMonth || dayOfMonth > daysInMonth) {
+                calendarHTML += '<div class="day"></div>';
+            } else {
+                calendarHTML += '<div class="day" onclick="showEventForm(' + year + ',' + month + ',' + dayOfMonth + ')">' + dayOfMonth + '</div>';
+                dayOfMonth++;
+            }
+        }
+    
+        calendarHTML += '</div>';
+        calendarHTML += '</div>';
+        document.querySelector('.calendar').innerHTML = calendarHTML;
+    }
+    
+    function displayEvents(month) {
+        const events = JSON.parse(localStorage.getItem('events')) || [];
+        const eventList = document.getElementById('eventList');
+        eventList.innerHTML = '';
+        events.forEach((event, index) => {
+            if (event.month == month) {
+                const li = document.createElement('li');
+                li.classList.add('event-item');
+                li.innerHTML = '<span class="event-description">' + event.description + '</span><br>' +
+                               '<span class="event-date">' + event.day + '/' + event.month + '/' + event.year + '</span>' +
+                               '<span class="delete-cross" onclick="deleteEvent(' + index + ',' + month + ')">✖</span>';
+                eventList.appendChild(li);
+            }
+        });
+    }
+    
+    function showEventForm(year, month, day) {
+        document.getElementById('eventDate').value = year + '-' + month.toString().padStart(2, '0') + '-' + day.toString().padStart(2, '0');
+        document.getElementById('eventForm').classList.add('show-form');
+    }
+    
+    function addEvent() {
+        const description = document.getElementById('eventDescription').value;
+        const date = document.getElementById('eventDate').value;
+        const [year, month, day] = date.split('-');
+        
+        const event = {
+            description: description,
+            year: parseInt(year),
+            month: parseInt(month),
+            day: parseInt(day)
+        };
+        
+        let events = JSON.parse(localStorage.getItem('events')) || [];
+        events.push(event);
+        localStorage.setItem('events', JSON.stringify(events));
+        
+        // Actualiser la liste des événements
+        displayEvents(currentMonth);
+        // Cacher le formulaire après l'ajout
+        document.getElementById('eventForm').classList.remove('show-form');
+    }
+    
+    let currentMonth = 1;
+    const currentYear = 2024;
+    
+    createCalendar(currentYear, currentMonth);
+    displayEvents(currentMonth);
+    
+    function prevMonth() {
+        currentMonth--;
+        if (currentMonth < 1) {
+            currentMonth = 12;
+        }
+        createCalendar(currentYear, currentMonth);
+        displayEvents(currentMonth);
+    }
+    
+    function nextMonth() {
+        currentMonth++;
+        if (currentMonth > 12) {
+            currentMonth = 1;
+        }
+        createCalendar(currentYear, currentMonth);
+        displayEvents(currentMonth);
+    }
+    
+    function deleteEvent(index, month) {
+        let events = JSON.parse(localStorage.getItem('events')) || [];
+        events = events.filter((event) => !(event.month == month && events.indexOf(event) == index));
+        localStorage.setItem('events', JSON.stringify(events));
+        displayEvents(month);
+    }
+</script>
+    
+</body>
+</html>
+
+
